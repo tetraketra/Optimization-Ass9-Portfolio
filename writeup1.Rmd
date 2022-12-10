@@ -1,0 +1,83 @@
+---
+title: "Nonlinear Portfolio Optimization"
+author: 'Team 12: Ben Silverberg, Ryan Lee, Andrew Lagattuta, Selena Smith'
+date: "12/9/2022"
+output: pdf_document
+---
+
+```{r load-packages, include=FALSE}
+library(dplyr)
+library(magrittr)
+library(knitr)
+library(tidyverse)
+library(RMySQL)
+library(reshape2)
+library(tinytex)
+```
+
+
+```{r}
+
+#Connect to MySQL
+pwd <- .rs.askForPassword("DB Password:")
+con <- RMySQL::dbConnect(RMySQL::MySQL(),dbname='nasdaq', username='root', password=pwd)
+```
+
+
+```{r}
+#Metadata
+dbListTables(con)
+
+port_db <- tbl(con, 'portfolio')
+port_query <- port_db %>%
+  select(expReturn, expRisk)
+
+port_query %>% show_query()
+
+dbGetQuery(con, '
+SELECT *
+FROM portfolio
+')
+```
+
+```{r}
+# plot the (x,y) values from the portfolio table onto a graph
+
+ggplot(data = port_db, aes(.data$expReturn, .data$expRisk)) +
+    geom_point() +
+    labs(x = "Expected Return", y = "Expected Risk", title = "Nasdaq Portfolio of Expected Risk vs. Expected Return")
+
+dbDisconnect(con)
+```
+
+## Commentary
+
+In this assignment, we used R, MySQL, Gurobi, Python, Excel, and Solver as an 
+integrated toolkit to help a user select a portfolio of NASDAQ stocks that
+maximizes returns for several different levels of risk.
+
+The following deliverables are submitted for consideration:
+
+• portfolio.py - Python program.
+• calc_corr.R - R program to populate the covariance or correlation matrix.
+• nasdaq.sql - Final database dump (export).
+• writeup.Rmd - The R Notebook used to generate this write up.
+• writeup.PDF - PDF knitted from the R notebook consisting of the graph.
+
+An Excel Solver prototype was generated to solve the given simple portfolio 
+maximization problem; the same model was then built in Gurobi to validate our results. 
+
+A NASDAQ database was then created in MySQL to support our R and Python programs.
+
+R was used to calculate the required matrix, vector, and to load the matrix of 10 
+year NASDAQ monthly returns to look at the mean of each stock and populate tables
+as required. 
+
+Python was used to generate the objective function terms and constraints, as appropriate, 
+using the values from your Solver prototype.
+
+Finally, the (x,y) values were read from the portfolio table, and plotted here. 
+
+In this graph, the expected return rises gradually as the expected risk
+increases until it reaches a steady state at about 0.27 for an expected risk of
+about 0.6 and above.
